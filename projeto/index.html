@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banco de Tempo | Plataforma Colaborativa de Habilidades</title>
+    
+    <!-- Fonte Oficial -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS Externo -->
+    <link rel="stylesheet" href="/css/styles.css">
+
+    <!-- SDK do Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <!-- ================= CABEÇALHO / NAVBAR ================= -->
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="/projeto/index.html" class="brand-logo">
+                <div class="logo-icon">⏳</div>
+                <div class="logo-text">
+                    <span class="brand-name">Banco de Tempo</span>
+                    <span class="brand-tag">Habilidades & Trocas</span>
+                </div>
+            </a>
+
+            <nav class="nav-menu">
+                <a href="/projeto/index.html" class="nav-item active">Trocas de Habilidades</a>
+                <a href="/pages/area_aluno.html" class="nav-item">Área do Aluno</a>
+                <a href="/pages/area_instrutor.html" class="nav-item">Área do Instrutor</a>
+                <a href="#como-funciona" class="nav-item">Como Funciona</a>
+                <a href="#meu-banco" class="nav-item">Meu Banco de Horas</a>
+            </nav>
+
+            <div class="nav-user-area">
+                <div class="credit-badge" title="Seu Saldo Atual de Créditos de Tempo" onclick="scrollToSection('meu-banco')">
+                    <span class="badge-icon">⏱️</span>
+                    <span class="badge-val" id="user-credits-display">4h Créditos</span>
+                </div>
+                <button class="btn btn-secondary" onclick="openModal('modal-nova-vaga')">+ Publicar Vaga</button>
+                <button class="btn btn-primary btn-open-login" onclick="openModal('modal-login')">Entrar / Perfil</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ================= HERO / BARRA DE PESQUISA ================= -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="hero-content">
+                <span class="pill-tag">🌱 Economia Colaborativa Real</span>
+                <h1 class="hero-title">Troque seu conhecimento por novas experiências. Sem dinheiro, apenas tempo.</h1>
+                <p class="hero-subtitle">Conecte-se com pessoas dispostas a ensinar o que você precisa e a aprender o que você sabe fazer.</p>
+            </div>
+
+            <!-- Busca Principal -->
+            <div class="search-bar-card">
+                <div class="search-field flex-grow">
+                    <span class="field-icon">🔍</span>
+                    <input type="text" id="input-search" placeholder="Buscar por habilidade, aula ou conhecimento (ex: Python, Inglês, Violão)...">
+                </div>
+                <div class="search-field">
+                    <span class="field-icon">📍</span>
+                    <select id="select-modalidade">
+                        <option value="todas">Todas as Modalidades</option>
+                        <option value="Remoto">Online / Remoto</option>
+                        <option value="Presencial">Presencial</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary btn-search" id="btn-execute-search">Buscar Vagas</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= EXPLORADOR DE VAGAS E FILTROS ================= -->
+    <section class="main-content" id="vagas">
+        <div class="container grid-layout">
+            
+            <!-- Sidebar de Filtros -->
+            <aside class="filter-sidebar">
+                <div class="filter-box">
+                    <div class="filter-header">
+                        <h3>Filtros de Pesquisa</h3>
+                        <button class="btn-clear" id="btn-clear-filters">Limpar</button>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">Tipo de Oportunidade</label>
+                        <div class="radio-options">
+                            <label><input type="radio" name="filter-type" value="todos" checked> Todas as Oportunidades</label>
+                            <label><input type="radio" name="filter-type" value="Oferece"> Ensinar (Cursos Disponíveis)</label>
+                            <label><input type="radio" name="filter-type" value="Procura"> Aprender (Pedidos de Alunos)</label>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">Categorias</label>
+                        <div class="category-checkboxes" id="category-filters-container">
+                            <!-- Categorias geradas por JS -->
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">Carga Horária Aprox.</label>
+                        <select id="filter-hours" class="form-select">
+                            <option value="qualquer">Qualquer duração</option>
+                            <option value="1">1 hora por sessão</option>
+                            <option value="2">2 horas por sessão</option>
+                            <option value="3">3+ horas por sessão</option>
+                        </select>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Lista de Vagas / Oportunidades -->
+            <main class="results-area">
+                <div class="results-header">
+                    <span class="results-count" id="results-counter">Carregando oportunidades...</span>
+                    <div class="sort-wrapper">
+                        <label>Ordenar por:</label>
+                        <select id="sort-select">
+                            <option value="recentes">Mais Recentes</option>
+                            <option value="populares">Melhores Avaliados</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Cards Grid -->
+                <div class="vagas-grid" id="vagas-container">
+                    <!-- Cards inseridos dinamicamente pelo app.js -->
+                </div>
+            </main>
+        </div>
+    </section>
+
+    <!-- ================= COMO FUNCIONA ================= -->
+    <section class="how-section" id="como-funciona">
+        <div class="container">
+            <div class="section-title-box">
+                <h2>Como Funciona o Banco de Tempo?</h2>
+                <p>Uma moeda justa onde 1 hora de qualquer pessoa tem o mesmo valor.</p>
+            </div>
+
+            <div class="steps-wrapper">
+                <div class="step-box">
+                    <div class="step-num">1</div>
+                    <h4>Cadastre-se</h4>
+                    <p>Crie seu perfil e escolha quais conhecimentos pode compartilhar com a comunidade.</p>
+                </div>
+                <div class="step-box">
+                    <div class="step-num">2</div>
+                    <h4>Encontre uma Vaga</h4>
+                    <p>Navegue pelas oportunidades de aprendizado ou ajude alguém que busca seu saber.</p>
+                </div>
+                <div class="step-box">
+                    <div class="step-num">3</div>
+                    <h4>Realize a Troca</h4>
+                    <p>Combine horário e formato (online ou presencial) e realize a mentoria ou auxílio.</p>
+                </div>
+                <div class="step-box">
+                    <div class="step-num">4</div>
+                    <h4>Acumule Créditos</h4>
+                    <p>Receba horas em sua conta para gastar aprendendo qualquer outra habilidade.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= DASHBOARD: MEU BANCO DE HORAS ================= -->
+    <section class="dashboard-section" id="meu-banco">
+        <div class="container">
+            <div class="dashboard-card">
+                <div class="dash-header">
+                    <div>
+                        <h2>Meu Extrato & Banco de Horas</h2>
+                        <p>Acompanhe suas horas doadas, recebidas e solicitações de troca.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="simulateCompleteTask()">+ Simular 1h Doada (+1 Crédito)</button>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <span class="stat-num" id="dash-balance">4h</span>
+                        <span class="stat-desc">Saldo Disponível</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-num" id="dash-given">12h</span>
+                        <span class="stat-desc">Horas Compartilhadas</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-num" id="dash-received">8h</span>
+                        <span class="stat-desc">Horas Aprendidas</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-num" id="dash-total-swaps">6</span>
+                        <span class="stat-desc">Trocas Concluídas</span>
+                    </div>
+                </div>
+
+                <h3>Histórico das Últimas Atividades</h3>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Atividade / Vaga</th>
+                                <th>Participante</th>
+                                <th>Tipo</th>
+                                <th>Horas</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-history-body">
+                            <!-- Preenchido via app.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= RODAPÉ INSTITUCIONAL ================= -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <div class="footer-col">
+                <div class="brand-logo footer-logo">
+                    <div class="logo-icon">⏳</div>
+                    <span class="brand-name" style="color: white;">Banco de Tempo</span>
+                </div>
+                <p>Plataforma social e colaborativa para incentivo ao aprendizado contínuo através da troca justa de tempo.</p>
+                <p class="edu-alert">🎓 Projeto com finalidade acadêmica e comunitária.</p>
+            </div>
+
+            <div class="footer-col">
+                <h4>Navegação</h4>
+                <ul>
+                    <li><a href="#vagas">Vagas de Habilidades</a></li>
+                    <li><a href="/pages/area_aluno.html">Área do Aluno</a></li>
+                    <li><a href="/pages/area_instrutor.html">Área do Instrutor</a></li>
+                    <li><a href="#como-funciona">Como Funciona</a></li>
+                    <li><a href="#meu-banco">Meu Extrato de Horas</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>Categorias Principais</h4>
+                <ul>
+                    <li><a href="#vagas">Tecnologia & Código</a></li>
+                    <li><a href="#vagas">Idiomas & Tradução</a></li>
+                    <li><a href="#vagas">Artes & Música</a></li>
+                    <li><a href="#vagas">Manutenção & Serviços</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 Banco de Tempo de Habilidades — Todos os direitos reservados de Stephanie Mesquita e Pedro Gama.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ================= MODAIS ================= -->
+
+    <!-- Modal Detalhes da Vaga / Escolha de Área -->
+    <div class="modal-backdrop" id="modal-vaga-detalhe">
+        <div class="modal-box" style="max-width: 520px; border-radius: 16px;">
+            <button class="modal-close" onclick="closeModal('modal-vaga-detalhe')">&times;</button>
+            <div id="modal-vaga-content">
+                <!-- O app.js insere o cabeçalho explicativo e os 2 botões de ação AQUI -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Publicar Nova Vaga -->
+    <div class="modal-backdrop" id="modal-nova-vaga">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-nova-vaga')">&times;</button>
+            <h2>Publicar Oportunidade no Banco de Tempo</h2>
+            <p>Cadastre o que você deseja ensinar ou o conhecimento que precisa aprender.</p>
+
+            <form id="form-nova-vaga">
+                <div class="form-group">
+                    <label>Título da Oportunidade</label>
+                    <input type="text" id="new-title" class="form-control" placeholder="Ex: Aulas de Violão para Iniciantes" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select id="new-type" class="form-control" required>
+                            <option value="Oferece">Eu Quero Ensinar (Oferecer)</option>
+                            <option value="Procura">Eu Quero Aprender (Buscar)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <select id="new-category" class="form-control" required>
+                            <option value="Tecnologia">Tecnologia</option>
+                            <option value="Idiomas">Idiomas</option>
+                            <option value="Educação">Educação</option>
+                            <option value="Artes">Artes</option>
+                            <option value="Música">Música</option>
+                            <option value="Culinária">Culinária</option>
+                            <option value="Organização">Organização</option>
+                            <option value="Manutenção">Manutenção</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Modalidade</label>
+                        <select id="new-modality" class="form-control" required>
+                            <option value="Remoto">Online / Remoto</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Horas por Sessão</label>
+                        <input type="number" id="new-hours" class="form-control" value="1" min="1" max="5" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Descrição Detalhada</label>
+                    <textarea id="new-desc" class="form-control" rows="3" placeholder="Explique o que será ensinado/aprendido, pré-requisitos e formato..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Publicar Oportunidade</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Autenticação (Login e Cadastro com Supabase) -->
+    <div class="modal-backdrop" id="modal-login">
+        <div class="modal-box" style="max-width: 400px;">
+            <button class="modal-close" onclick="closeModal('modal-login')">&times;</button>
+            
+            <!-- Alternador de Abas -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+                <button type="button" id="tab-login-btn" onclick="switchAuthTab('login')" style="flex: 1; padding: 8px; border: none; background: none; font-weight: bold; color: #0284c7; cursor: pointer; border-bottom: 2px solid #0284c7; font-size: 1rem;">Entrar</button>
+                <button type="button" id="tab-register-btn" onclick="switchAuthTab('register')" style="flex: 1; padding: 8px; border: none; background: none; font-weight: bold; color: #64748b; cursor: pointer; font-size: 1rem;">Criar Conta</button>
+            </div>
+
+            <!-- FORMULÁRIO DE LOGIN -->
+            <form id="form-login">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="login-email" style="display: block; margin-bottom: 4px; font-weight: 600;">E-mail</label>
+                    <input type="email" id="login-email" class="form-control" placeholder="seuemail@exemplo.com" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="login-password" style="display: block; margin-bottom: 4px; font-weight: 600;">Senha</label>
+                    <input type="password" id="login-password" class="form-control" placeholder="Sua senha" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full" style="width: 100%; margin-top: 15px;">
+                    Entrar
+                </button>
+            </form>
+
+            <!-- FORMULÁRIO DE CADASTRO -->
+            <form id="form-register" style="display: none;">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="reg-name" style="display: block; margin-bottom: 4px; font-weight: 600;">Nome Completo</label>
+                    <input type="text" id="reg-name" class="form-control" placeholder="Seu Nome" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="reg-email" style="display: block; margin-bottom: 4px; font-weight: 600;">E-mail</label>
+                    <input type="email" id="reg-email" class="form-control" placeholder="seuemail@exemplo.com" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="reg-password" style="display: block; margin-bottom: 4px; font-weight: 600;">Senha (mínimo 6 caracteres)</label>
+                    <input type="password" id="reg-password" class="form-control" placeholder="Crie uma senha" required minlength="6" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full" style="width: 100%; margin-top: 15px; background: #16a34a; border-color: #16a34a;">
+                    Cadastrar e Criar Conta
+                </button>
+            </form>
+
+            <!-- Divisor e Botão Google -->
+            <div style="display: flex; align-items: center; margin: 20px 0 15px 0;">
+                <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+                <span style="padding: 0 10px; color: #64748b; font-size: 0.85rem; font-weight: 600;">OU</span>
+                <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+            </div>
+
+            <button type="button" onclick="handleGoogleLogin()" style="width: 100%; padding: 10px; background: white; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <img src="https://www.google.com/favicon.ico" alt="Google" style="width: 18px; height: 18px;">
+                Entrar com o Google
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="toast">Mensagem do sistema</div>
+
+    <!-- Arquivo JavaScript principal -->
+    <script src="/js/app.js"></script>
+</body>
+</html>

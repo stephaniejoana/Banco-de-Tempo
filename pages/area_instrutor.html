@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Instrutor</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Font Awesome Icons & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .prose-custom p { margin-bottom: 1rem; line-height: 1.7; color: #334155; }
+        .prose-custom h3 { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-100 text-slate-800 antialiased">
+
+    <!-- HEADER / NAVEGAÇÃO -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-sky-600 flex items-center justify-center text-white font-bold text-xl shadow">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                </div>
+                <div>
+                    <span class="text-xs text-sky-400 font-bold uppercase tracking-wider block">Área do Instrutor</span>
+                    <h1 class="text-base font-bold text-white leading-none">Gestão de Cursos </h1>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-slate-300 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <strong class="text-white">Banco Ativo</strong>
+                </span>
+                <button onclick="showView('view-dashboard')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition">
+                    <i class="fa-solid fa-folder-open mr-1"></i> Meus Cursos
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTAINER PRINCIPAL -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- VISTA 1: DASHBOARD (MEUS CURSOS DO BANCO)  -->
+
+        <section id="view-dashboard" class="space-y-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900">Seus Cursos</h2>
+                    <p class="text-sm text-slate-500 mt-1">Gerencie os conteúdos, assuntos e provas.</p>
+                </div>
+                <button onclick="openFormNewCourse()" class="w-full sm:w-auto px-5 py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Criar Novo Curso</span>
+                </button>
+            </div>
+
+            <!-- INDICADOR DE CARREGAMENTO -->
+            <div id="loading-spinner" class="py-12 text-center">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-sky-600 mb-3"></i>
+                <p class="text-sm text-slate-500 font-medium">Buscando seus cursos no banco de dados...</p>
+            </div>
+
+            <!-- GRID DE CURSOS CRIADOS -->
+            <div id="courses-list-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Preenchido via JavaScript -->
+            </div>
+        </section>
+
+        <!-- VISTA 2: FORMULÁRIO (CRIAR / EDITAR CURSO) -->
+        <section id="view-form" class="hidden space-y-6 max-w-4xl mx-auto">
+            <div class="flex items-center justify-between bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div>
+                    <span class="text-xs font-bold text-sky-600 uppercase tracking-widest">Editor do Instrutor</span>
+                    <h2 id="form-title-heading" class="text-xl font-bold text-slate-900">Cadastrar Novo Curso</h2>
+                </div>
+                <button onclick="showView('view-dashboard')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-lg transition">
+                    <i class="fa-solid fa-xmark mr-1"></i> Cancelar
+                </button>
+            </div>
+
+            <form id="course-form" onsubmit="handleSaveCourse(event)" class="space-y-6">
+                <input type="hidden" id="editing-course-id" value="">
+
+                <!-- 1. DADOS BÁSICOS -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+                        <i class="fa-solid fa-info-circle text-sky-600"></i> 1. Informações Básicas
+                    </h3>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Título do Curso *</label>
+                        <input type="text" id="input-title" required class="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" placeholder="Ex: Introdução ao Design Digital e UI/UX">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Categoria *</label>
+                            <select id="input-category" required class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none bg-white">
+                                <option value="Tecnologia">Tecnologia & Programação</option>
+                                <option value="Design">Design & Artes Visual</option>
+                                <option value="Negócios">Negócios & Gestão</option>
+                                <option value="Idiomas">Idiomas & Comunicação</option>
+                                <option value="Geral">Outros</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Carga Horária Estimada (Horas) *</label>
+                            <input type="number" id="input-hours" min="1" max="50" value="2" required class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Resumo / Apresentação Geral *</label>
+                        <textarea id="input-summary" rows="2" required class="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 outline-none" placeholder="Breve explicação sobre o objetivo geral deste curso..."></textarea>
+                    </div>
+                </div>
+
+                <!-- 2. TÓPICOS E ASSUNTOS -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-sky-600"></i> 2. Tópicos e Conteúdo do Assunto
+                        </h3>
+                        <button type="button" onclick="addTopicField()" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold px-3 py-1.5 rounded-lg border border-sky-200 transition">
+                            <i class="fa-solid fa-plus mr-1"></i> Adicionar Tópico
+                        </button>
+                    </div>
+
+                    <p class="text-xs text-slate-500">Insira os tópicos das aulas e digite todo o texto explicativo (assunto) que o aluno vai ler.</p>
+
+                    <div id="topics-container" class="space-y-4">
+                        <!-- Tópicos dinâmicos -->
+                    </div>
+                </div>
+
+                <!-- 3. AVALIAÇÃO / PROVAS -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-file-signature text-sky-600"></i> 3. Prova / Avaliação de Conhecimento
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Crie questões manuais para testar o aprendizado.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="addQuestionField()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-lg transition">
+                                <i class="fa-solid fa-plus mr-1"></i> Pergunta Manual
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="quiz-questions-container" class="space-y-4">
+                        <!-- Questões dinâmicas -->
+                    </div>
+                </div>
+
+                <!-- BOTÕES DE AÇÃO DO FORMULÁRIO -->
+                <div class="flex items-center justify-end gap-3 pt-4">
+                    <button type="button" onclick="showView('view-dashboard')" class="px-5 py-3 text-slate-600 hover:text-slate-900 font-bold text-sm">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btn-save-submit" class="px-8 py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow-lg transition text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Salvar no Banco de Dados</span>
+                    </button>
+                </div>
+            </form>
+        </section>
+        
+        <section id="view-preview" class="hidden space-y-6 max-w-4xl mx-auto">
+            <!-- Barra de Ações da Prévia -->
+            <div class="bg-slate-900 text-white p-4 rounded-2xl shadow-md flex items-center justify-between">
+                <span class="text-xs font-semibold text-sky-300 flex items-center gap-2">
+                    <i class="fa-solid fa-eye text-sky-400"></i> Modo Prévia: Assim que o aluno lerá seu curso
+                </span>
+                <div class="flex items-center gap-2">
+                    <button id="btn-edit-from-preview" onclick="" class="text-xs bg-sky-600 hover:bg-sky-500 text-white font-bold px-3 py-1.5 rounded-lg transition">
+                        <i class="fa-solid fa-pen-to-square mr-1"></i> Editar Este Curso
+                    </button>
+                    <button onclick="showView('view-dashboard')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg transition">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> Voltar ao Painel
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cartão Principal do Curso Renderizado -->
+            <article class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white p-8">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span id="preview-category" class="bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-bold uppercase px-3 py-1 rounded-full">Categoria</span>
+                        <span class="text-xs text-slate-300"><i class="fa-regular fa-clock mr-1"></i> <span id="preview-hours">2</span> Horas de Duração</span>
+                    </div>
+                    <h1 id="preview-title" class="text-2xl sm:text-3xl font-extrabold text-white mb-3">Título do Curso</h1>
+                    <p id="preview-summary" class="text-slate-300 text-sm sm:text-base leading-relaxed">Resumo do curso...</p>
+                </div>
+
+                <div class="p-8 space-y-8">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2 mb-6 flex items-center gap-2">
+                            <i class="fa-solid fa-book-open text-sky-600"></i> Conteúdo Didático & Assuntos
+                        </h2>
+                        <div id="preview-topics-render" class="space-y-6">
+                            <!-- Renderizado via JS -->
+                        </div>
+                    </div>
+
+                    <div class="pt-6 border-t border-slate-200">
+                        <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-file-signature text-purple-600"></i> Avaliação do Curso (Prova)
+                        </h2>
+                        
+                        <div id="preview-quiz-container" class="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-6">
+                            <!-- Questões e Alternativas na Prévia -->
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+    </main>
+
+    <!-- TOAST NOTIFICAÇÃO -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300"></div>
+
+    <!-- SDK do Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Script Exclusivo de Lógica do Instrutor isolado como Módulo -->
+    <script type="module" src="/js/area_instrutor.js"></script>
+</body>
+</html>
